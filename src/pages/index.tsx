@@ -22,7 +22,7 @@ const schema = yup.object({
     .max(200, 'Máximo de 200 caracteres')
     .email('Email inválido')
     .required('Campo obrigatório'),
-    password: yup
+  password: yup
     .string()
     .required('Campo obrigatório')
     .min(8, 'Mínimo de 8 caracteres')
