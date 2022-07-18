@@ -30,7 +30,7 @@ import { useEffect, useRef, useState } from 'react';
 import getAxiosErrorMessage from '../utils/getAxiosErrorMessage';
 import { api } from '../services/apiClient';
 import { ActivityTr as Tr } from '../components/Table/Tr';
-import { IoExitOutline } from 'react-icons/io5';
+import { IoCreateOutline, IoExitOutline } from 'react-icons/io5';
 import { signOut } from '../contexts/AuthContext';
 import { SubmitHandler, useForm } from 'react-hook-form';
 import * as yup from 'yup';
@@ -50,10 +50,32 @@ type FormData = {
   password: string;
 }
 
+type NewUserFormData = {
+  name: string;
+  email: string;
+  password: string;
+}
+
 const schema = yup.object({
   name: yup
     .string()
     .required('Campo obrigatório.'),
+  password: yup
+    .string()
+    .required('Campo obrigatório')
+    .min(8, 'Mínimo de 8 caracteres')
+    .max(48, 'Máximo de 50 caracteres'),
+});
+
+const newUserSchema = yup.object({
+  name: yup
+    .string()
+    .required('Campo obrigatório.'),
+  email: yup
+    .string()
+    .max(200, 'Máximo de 200 caracteres')
+    .email('Email inválido')
+    .required('Campo obrigatório'),
   password: yup
     .string()
     .required('Campo obrigatório')
@@ -72,13 +94,26 @@ export default function ListUsers() {
     onOpen: onEditUserOpen,
     onClose: onEditUserClose
   } = useDisclosure();
+  const {
+    isOpen: isNewUserOpen,
+    onOpen: onNewUserOpen,
+    onClose: onNewUserClose
+  } = useDisclosure();
   const cancelRef = useRef(null);
 
   const { formState, handleSubmit, register } = useForm<FormData>({
     resolver: yupResolver(schema)
   });
-
   const { errors } = formState;
+
+  const {
+    formState: formStateNewUser,
+    handleSubmit: handleSubmitNewUser,
+    register: registerNewUser
+  } = useForm<NewUserFormData>({
+    resolver: yupResolver(newUserSchema)
+  });
+  const { errors: newUserErrors } = formStateNewUser;
 
   const [ isTableLoading, setIsTableLoading ] = useState(true);
   const [ users, setUsers ] = useState<IUser[]>([]);
@@ -126,6 +161,7 @@ export default function ListUsers() {
     setActionUserId(undefined);
     onClose();
     onEditUserClose();
+    onNewUserClose();
   }
 
   async function handleDeleteUser() {
@@ -205,6 +241,46 @@ export default function ListUsers() {
     }
   }
 
+  const handleNewUser: SubmitHandler<NewUserFormData> = async ({
+    name,
+    email,
+    password,
+  }) => {
+    try {
+      const response = await api.post(
+        '/users',
+        {
+          name,
+          email,
+          password,
+        }
+      );
+
+      toast({
+        title: 'Sucesso',
+        description: 'O usuário foi adicionado com sucesso.',
+        status: 'success',
+      });
+
+      const updatedUsers: IUser[] = [
+        ...users,
+        response.data
+      ];
+
+      setUsers(updatedUsers);
+    } catch (e) {
+      const errorMessage = getAxiosErrorMessage(e, errorMessages);
+
+      toast({
+        title: 'Erro',
+        description: errorMessage,
+        status: 'error',
+      });
+    } finally {
+      handleResetAction();
+    }
+  }
+
   return (
     <>
       <Head>
@@ -234,6 +310,15 @@ export default function ListUsers() {
               </Heading>
 
               <Flex flexDir="row" gap="2" alignItems="center">
+                <Flex gap="2" alignItems="center">
+                  <IconButton
+                    icon={<Icon as={IoCreateOutline}/>}
+                    aria-label='Novo usuário'
+                    onClick={onNewUserOpen}
+                  />
+                  <Text>Novo usuário</Text>
+                </Flex>
+
                 <IconButton
                   icon={<Icon as={IoExitOutline}/>}
                   aria-label='Sair'
@@ -381,6 +466,66 @@ export default function ListUsers() {
                 ml={3}
                 colorScheme="primary"
                 isLoading={formState.isSubmitting}
+              >
+                Salvar
+              </Button>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialogOverlay>
+      </AlertDialog>
+
+      <AlertDialog
+        isOpen={isNewUserOpen}
+        leastDestructiveRef={cancelRef}
+        onClose={onNewUserClose}
+      >
+        <AlertDialogOverlay>
+          <AlertDialogContent
+            as="form"
+            onSubmit={handleSubmitNewUser(handleNewUser)}
+          >
+            <AlertDialogHeader fontSize="lg" fontWeight="bold">
+              Novo usuário
+            </AlertDialogHeader>
+
+            <AlertDialogBody>
+              <VStack gap="4">
+                <Input
+                  label="Nome"
+                  type="text"
+                  autoComplete="name"
+                  error={newUserErrors.name}
+                  {...registerNewUser('name')}
+                />
+
+                <Input
+                  label="E-mail"
+                  type="email"
+                  autoComplete="email"
+                  error={newUserErrors.email}
+                  {...registerNewUser('email')}
+                />
+
+                <Input
+                  label="Senha"
+                  type="password"
+                  autoComplete="new-password"
+                  error={newUserErrors.password}
+                  {...registerNewUser('password')}
+                />
+              </VStack>
+            </AlertDialogBody>
+
+            <AlertDialogFooter>
+              <Button ref={cancelRef} onClick={onNewUserClose}>
+                Cancelar
+              </Button>
+
+              <Button
+                type="submit"
+                ml={3}
+                colorScheme="primary"
+                isLoading={formStateNewUser.isSubmitting}
               >
                 Salvar
               </Button>
