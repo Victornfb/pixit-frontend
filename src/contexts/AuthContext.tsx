@@ -78,7 +78,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
       Router.push('/list');
     } catch (err: any) {
-      throw new Error(err.response.data.message);
+      if (err.response.data?.message) {
+        throw new Error(err.response.data.message);
+      }
+      throw new Error(err.message);
     }
   }
 
