@@ -2,6 +2,12 @@
 
 O projeto Pixit Frontend é um CRUD de usuários.
 
+<p align="left">
+    <a href="https://gist.github.com/Victornfb/a7b97215f87b4f1f83652082a0e12e3a#file-pixit_teste-pdf" target="_blank">
+        <img align="center" src="https://img.shields.io/badge/-Teste_original-202323?style=flat&logo=Fireship&logoColor=#EB844E" alt="Teste original"/>
+    </a>
+</p>
+
 ## 🧪 Tecnologias
 
 Esse projeto foi desenvolvido com as seguintes tecnologias:
